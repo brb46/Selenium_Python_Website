@@ -7,8 +7,22 @@ from selenium.webdriver.common.action_chains import ActionChains
 import json
 import time
 
+with open("data.json", "w") as f:
+    json.dump([],f)
+
+def write_json(new_data,filename='data.json'):
+    with open(filename, 'r+') as file:
+        #First we load existing data into a dictionary.
+        file_data = json.load(file)
+        #Join new_data with file_data inside emp_details 
+        file_data.append(new_data)
+        #sets files current postion at offset.
+        file.seek(0)
+        #convert back to json
+        json.dump(file_data,file, indent = 4)
+
 class SearchTextElement(BasePageElement):
-    locator = "q"
+    locator = "q" #placeholder
 
 class BasePage(object):
     def __init__ (self, driver):
@@ -152,9 +166,8 @@ class SearchpypiPage(BasePage):
          
         lists = self.driver.find_elements( By.XPATH,'//a[@class="package-snippet"]')
         isNextDisabled = False
+        page = 1
 
-
-    
         while not isNextDisabled:
             try:
                 lists = self.driver.find_elements( By.XPATH,'//a[@class="package-snippet"]')
@@ -171,17 +184,27 @@ class SearchpypiPage(BasePage):
                     print(title)
                     print(version)
                     print(date)
-                    print(Summary + "\n")
+                    print(Summary + "\n")  #prints out the information of the search results in the console 
+
+                    write_json ({
+                    "page": str(page),
+                    "title": title,
+                    "version": version,
+                    "date": date,
+                    "Summary": Summary,
+                
+            })
 
                 next_Button = WebDriverWait (self.driver,10).until(EC.presence_of_element_located(
                     (By.XPATH,"//*[contains(text(), 'Next')]")))
 
+                page += 1
                 next_Class = next_Button.get_attribute('class')
                 if 'button--disabled' in next_Class:
                     isNextDisabled = True
                 else:
                     print("hi")
-                    #next button is click until pagination-disabled is true
+                    #next button is click until button-disabled is true
                     self.driver.find_element(By.XPATH, "//*[contains(text(), 'Next')]").click()        
             except Exception as e:
                 print(e, "Main error")
